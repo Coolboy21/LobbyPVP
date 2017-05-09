@@ -35,7 +35,7 @@ local.properties
 dist/
 nbproject/
 test/
-build/
+/build/*
 build.xml
 manifest.mf
 
