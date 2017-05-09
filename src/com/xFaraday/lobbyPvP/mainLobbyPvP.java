@@ -44,7 +44,7 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
     public void onDisable() {
         getLogger().info("LobbyPvP was stoped!");
     }
-
+    //Show Damage
     @EventHandler
     public void onDamagePlayers(EntityDamageByEntityEvent e) {
         if ((e.getDamager() instanceof Player)
@@ -56,7 +56,7 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
             BountifulAPI.sendActionBar(d, p.getDisplayName().replace('&', '§') + " &7➠ &4".replace('&', '§') + "&4❤ &6".replace('&', '§') + String.format("%.1f", damagePlayers) + "&7(&e".replace('&', '§') + String.format("%.1f", damage) + "&7)".replace('&', '§'), -1);
         }
     }
-
+    // Show Damage
     @EventHandler
     public void onShootBow(EntityDamageByEntityEvent e) {
         Entity entity = e.getEntity();
@@ -66,9 +66,7 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
                 Arrow arrow = (Arrow) damager;
                 Player p = (Player) e.getEntity();
                 ProjectileSource shoot = arrow.getShooter();
-                if (!(shoot instanceof Player)) {
-                    return;
-                }
+                if (!(shoot instanceof Player)) return;
                 if (p instanceof Player) {
                     Player h = (Player) entity;
                     double damage = e.getFinalDamage();
@@ -130,11 +128,11 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
                     public void run() {
                         block.setType(material);
                     }
-                }.runTaskLater(plugin, 200);
+                }.runTaskLater(plugin, 200); //10 sec timer
             }
         }
     }
-
+    //Custom Death Messages
     @EventHandler
     public void DeathMessage(PlayerDeathEvent event) {
         Player player = event.getEntity();
@@ -146,7 +144,7 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void Granades(PlayerEggThrowEvent ev) {
+    public void Grenade(PlayerEggThrowEvent ev) {
         Egg e = ev.getEgg();
         CraftCreeper creep = e.getWorld().spawn(e.getLocation(), CraftCreeper.class);
         EntityCreeper nms = creep.getHandle();
