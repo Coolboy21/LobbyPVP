@@ -224,3 +224,6 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+build/classes/com/xFaraday/lobbyPvP/mainLobbyPvP.class
+build/classes/com/xFaraday/lobbyPvP/mainLobbyPvP.class
+build/built-jar.properties
