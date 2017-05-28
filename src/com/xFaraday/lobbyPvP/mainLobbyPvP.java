@@ -22,10 +22,17 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.connorlinfoot.bountifulapi.BountifulAPI;
+import java.util.UUID;
 
 import net.minecraft.server.v1_11_R1.EntityCreeper;
 import net.minecraft.server.v1_11_R1.EntityLiving;
 import net.minecraft.server.v1_11_R1.NBTTagCompound;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionData;
 import org.bukkit.projectiles.ProjectileSource;
@@ -44,6 +51,7 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
     public void onDisable() {
         getLogger().info("LobbyPvP was stoped!");
     }
+
     //Show Damage
     @EventHandler
     public void onDamagePlayers(EntityDamageByEntityEvent e) {
@@ -56,6 +64,16 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
             BountifulAPI.sendActionBar(d, p.getDisplayName().replace('&', '§') + " &7➠ &4".replace('&', '§') + "&4❤ &6".replace('&', '§') + String.format("%.1f", damagePlayers) + "&7(&e".replace('&', '§') + String.format("%.1f", damage) + "&7)".replace('&', '§'), -1);
         }
     }
+
+    @EventHandler
+    public void eggs(ProjectileLaunchEvent event) {
+        if (event.getEntity().getType().equals(EntityType.EGG) && event.getEntity().getShooter() instanceof Player) {
+            Egg egg = (Egg) event.getEntity();
+            Player shooter = (Player) egg.getShooter();
+            egg.setMetadata("owner", new FixedMetadataValue(this, shooter.getUniqueId().toString()));
+        }
+    }
+
     // Show Damage
     @EventHandler
     public void onShootBow(EntityDamageByEntityEvent e) {
@@ -66,7 +84,9 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
                 Arrow arrow = (Arrow) damager;
                 Player p = (Player) e.getEntity();
                 ProjectileSource shoot = arrow.getShooter();
-                if (!(shoot instanceof Player)) return;
+                if (!(shoot instanceof Player)) {
+                    return;
+                }
                 if (p instanceof Player) {
                     Player h = (Player) entity;
                     double damage = e.getFinalDamage();
@@ -132,14 +152,32 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
             }
         }
     }
+
     //Custom Death Messages
     @EventHandler
     public void DeathMessage(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        if (event.getDeathMessage().endsWith("was blown up by Міна")) {
-            event.setDeathMessage("&c".replace('&', '§') + player.getName() + "&f підірвався на міні".replace('&', '§'));
-        } else if (event.getDeathMessage().endsWith("was blown up by Граната")) {
-            event.setDeathMessage("&c".replace('&', '§') + player.getName() + "&f вбитий гранатою".replace('&', '§'));
+        EntityDamageEvent lastDamageEvent = player.getLastDamageCause();
+        if ((lastDamageEvent instanceof EntityDamageByEntityEvent)) {
+            EntityDamageByEntityEvent damageEvent = (EntityDamageByEntityEvent) lastDamageEvent;
+            Entity damager = damageEvent.getDamager();
+            if (("Міна").equals(damager.getCustomName()) && damager.hasMetadata("owner")) {
+                MetadataValue owner = damager.getMetadata("owner").get(0);
+                OfflinePlayer killer = Bukkit.getOfflinePlayer(UUID.fromString(owner.asString()));
+                event.setDeathMessage("§c" + player.getDisplayName() + "§f підірвався на міні гравця §c" + killer.getName());
+            }
+            if (("Граната").equals(damager.getCustomName()) && damager.hasMetadata("owner")) {
+                MetadataValue owner = damager.getMetadata("owner").get(0);
+                OfflinePlayer killer = Bukkit.getOfflinePlayer(UUID.fromString(owner.asString()));
+                event.setDeathMessage("§c" + player.getDisplayName() + "§f підірвався на гранаті гравця §c" + killer.getName());
+            }
+        }
+    }
+
+    @EventHandler
+    public void placeMine(BlockPlaceEvent event) {
+        if (event.getBlock().getType().equals(Material.STONE_PLATE)) {
+            event.getBlock().setMetadata("owner", new FixedMetadataValue(this, event.getPlayer().getUniqueId().toString()));
         }
     }
 
@@ -147,6 +185,8 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
     public void Grenade(PlayerEggThrowEvent ev) {
         Egg e = ev.getEgg();
         CraftCreeper creep = e.getWorld().spawn(e.getLocation(), CraftCreeper.class);
+        String player = ev.getPlayer().getUniqueId().toString();
+        creep.setMetadata("owner", new FixedMetadataValue(this, player));
         EntityCreeper nms = creep.getHandle();
         NBTTagCompound nbttag = new NBTTagCompound();
         nms.c(nbttag);
@@ -164,6 +204,10 @@ public class mainLobbyPvP extends JavaPlugin implements Listener {
             Block b = ev.getClickedBlock();
             if (b.getType() == Material.STONE_PLATE) {
                 CraftCreeper e = b.getWorld().spawn(b.getLocation().add(0.5, 0, 0.5), CraftCreeper.class);
+                if (b.hasMetadata("owner")) {
+                    String player = b.getMetadata("owner").get(0).asString();
+                    e.setMetadata("owner", new FixedMetadataValue(this, player));
+                }
                 EntityCreeper nms = e.getHandle();
                 NBTTagCompound nbttag = new NBTTagCompound();
                 nms.c(nbttag);
